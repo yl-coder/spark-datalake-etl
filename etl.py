@@ -4,13 +4,13 @@ import os
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import udf, col,unix_timestamp
 from pyspark.sql.functions import year, month, dayofmonth, hour, weekofyear, date_format
-from pyspark.sql.types import DateType, TimestampType, IntegerType;
+from pyspark.sql.types import DateType, TimestampType, IntegerType
 
 config = configparser.ConfigParser()
 config.read('dl.cfg')
 
-os.environ['AWS_ACCESS_KEY_ID']=config.get("KEYS", "AWS_ACCESS_KEY_ID");
-os.environ['AWS_SECRET_ACCESS_KEY']=config.get("KEYS", "AWS_SECRET_ACCESS_KEY");
+os.environ['AWS_ACCESS_KEY_ID']=config.get("KEYS", "AWS_ACCESS_KEY_ID")
+os.environ['AWS_SECRET_ACCESS_KEY']=config.get("KEYS", "AWS_SECRET_ACCESS_KEY")
 
 
 def create_spark_session():
@@ -41,7 +41,7 @@ def process_song_data(spark, input_data, output_data):
     song_data = input_data + "/song_data/*/*/*/*.json"
     
     # read song data file
-    df = spark.read.option("inferschema", "true").json(song_data);
+    df = spark.read.option("inferschema", "true").json(song_data)
 
     # extract columns to create songs table
     songs_table = df.select("song_id", "title", "artist_id", "year", "duration")
@@ -50,7 +50,7 @@ def process_song_data(spark, input_data, output_data):
     songs_table.write.partitionBy("year","artist_id").parquet(output_data + "song-data.parquet", mode="overwrite")
 
     # extract columns to create artists table
-    artists_table = df.select("artist_id", col("artist_name").alias("name"), col("artist_location").alias("location"), col("artist_latitude").alias("latitude"), col("artist_longitude").alias("longitude"));
+    artists_table = df.select("artist_id", col("artist_name").alias("name"), col("artist_location").alias("location"), col("artist_latitude").alias("latitude"), col("artist_longitude").alias("longitude"))
     
     # write artists table to parquet files
     artists_table = artists_table.write.parquet(output_data + "/data/artists-data.parquet", mode="overwrite")
@@ -73,13 +73,13 @@ def process_log_data(spark, input_data, output_data):
     log_data = input_data + "/log_data/*/*/*.json"
 
     # read log data file
-    df = spark.read.option("inferschema", "true").json(log_data);
+    df = spark.read.option("inferschema", "true").json(log_data)
     
     # filter by actions for song plays
     df = df.filter(df.page == 'NextSong')
 
     # extract columns for users table    
-    users_table = df.select(col("userId").alias("user_id"), col("firstName").alias("first_name"), col("lastName").alias("last_name"), "gender", "level");
+    users_table = df.select(col("userId").alias("user_id"), col("firstName").alias("first_name"), col("lastName").alias("last_name"), "gender", "level")
 
     # write users table to parquet files
     users_table = users_table.write.parquet(output_data + "/users-data.parquet", mode="overwrite")
@@ -88,13 +88,13 @@ def process_log_data(spark, input_data, output_data):
 
     get_weekday = udf(lambda x: x.weekday(), IntegerType()) 
 
-    time_table = df.select(col("timestamp_datetime").alias("start_time"), hour("timestamp_datetime").alias("hour"), dayofmonth("timestamp_datetime").alias("day"), weekofyear("timestamp_datetime").alias("week"), month("timestamp_datetime").alias("month"), year("timestamp_datetime").alias("year"), get_weekday("timestamp_datetime").alias("weekday"));
+    time_table = df.select(col("timestamp_datetime").alias("start_time"), hour("timestamp_datetime").alias("hour"), dayofmonth("timestamp_datetime").alias("day"), weekofyear("timestamp_datetime").alias("week"), month("timestamp_datetime").alias("month"), year("timestamp_datetime").alias("year"), get_weekday("timestamp_datetime").alias("weekday"))
     # write time table to parquet files partitioned by year and month
     time_table.write.partitionBy("year", "month").parquet(output_data + "/time-data.parquet", mode="overwrite")
 
     # read in song data to use for songplays table
     song_data = input_data + "/song_data/*/*/*/*.json"
-    song_df = spark.read.option("inferschema", "true").json(song_data);
+    song_df = spark.read.option("inferschema", "true").json(song_data)
     df = df.filter(df.page == "NextSong").filter(df.userId.isNotNull())
     joined_df = df.join(song_df, (df.artist == song_df.artist_name) & (df.song == song_df.title))
 
